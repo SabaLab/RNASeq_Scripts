@@ -6,6 +6,7 @@
 # Generic script to run cutadapt on a batch of samples
 #
 # 1.0.0 - 1/4/18 
+# 1.0.1 - 2/9/18 - fixed a bug where unpaired data still required a pair label
 ##############################################################################################
 
 import sys,subprocess,glob,os
@@ -22,7 +23,10 @@ def runProcessing(q,cutadaptPath,options,opts):
 		#compile file list
 		if(opts.countRaw):
 			runRawCount(sampleNameWPath)
-		files=glob.glob(sampleNameWPath+"*"+opts.pairPrefix+"1*"+opts.inSuffix)
+		search=sampleNameWPath+"*"+opts.inSuffix
+		if(opts.paired):
+			search=sampleNameWPath+"*"+opts.pairPrefix+"1*"+opts.inSuffix
+		files=glob.glob(search)
 		runCutadapt(cutadaptPath,options,opts,files,sampleName)
 		runCountTrimmed(opts,sampleName)
 
