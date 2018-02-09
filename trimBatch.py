@@ -30,7 +30,7 @@ def runRawCount(sampleName):
 	print("counting RawReads")
 	fileList=glob.glob(sampleName+"*"+opts.inSuffix)
 	for f in fileList:
-		countFile=f+".count.txt.test"
+		countFile=f+".count.txt"
 		if( not(os.path.isfile(countFile)) or os.stat(countFile).st_size == 0 ):
 			countCmd="gzip -dc "+f+" | awk '/@/ {getline; print length($0);getline;getline}' | awk -v sample=\""+f+"\" '{sum+=$1} END {print sample,sum/NR,NR}' > "+countFile
 			print("running:"+countCmd)
@@ -67,7 +67,7 @@ def runCountTrimmed(opts,sampleName):
 	print("counting trimmedReads")
 	files=glob.glob(opts.output+"/"+sampleName+"*.trimmed"+opts.inSuffix)
 	for f in files:
-		countFile=f+".count.txt.test"
+		countFile=f+".count.txt"
 		countCmd="gzip -dc "+f+" | awk '/@/ {getline; print length($0);getline;getline}' | awk -v sample=\""+f+"\" '{sum+=$1} END {print sample,sum/NR,NR}' > "+countFile
 		print("running:"+countCmd)
 		completed=subprocess.run(countCmd,shell=True, executable='/bin/bash')
