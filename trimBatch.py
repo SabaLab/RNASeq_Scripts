@@ -7,6 +7,7 @@
 #
 # 1.0.0 - 1/4/18 
 # 1.0.1 - 2/9/18 - fixed a bug where unpaired data still required a pair label
+#		- fixed a bug parsing sample names when the sample delimiter is not present
 ##############################################################################################
 
 import sys,subprocess,glob,os
@@ -78,7 +79,7 @@ def runCountTrimmed(opts,sampleName):
 
 if __name__ == '__main__':
 	usage = 'USAGE: %prog inputPath\n'
-	parser = OptionParser(usage=usage, version="1.0.0")
+	parser = OptionParser(usage=usage, version="1.0.1")
 
 	parser.add_option('-c', '--count-raw',  action="store_true", dest='countRaw',default=False,
 	                      help='When set script will count/summarize the raw files first')
@@ -184,7 +185,11 @@ if __name__ == '__main__':
 			end=f.rfind(opts.sampleDelim)
 			#send=f.find("_",start)
 			if end<0:
-				sampleName=f[start:]
+				end=f.rfind(opts.inSuffix)
+				if(end<0):
+					sampleName=f[start:]
+				else:
+					sampleName=f[start:end]
 			else:
 				sampleName=f[start:end]
 			outFile=outPath+sampleName+".trimmed.fq.gz"
