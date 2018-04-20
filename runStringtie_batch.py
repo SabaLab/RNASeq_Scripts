@@ -51,6 +51,9 @@ parser.add_option('', '--s-M',  action="store", dest='sortMem',default="1G",
 parser.add_option('', '--output-pbs',  action="store_true", dest='pbs',default=False,
                       help='When set instead of calling Stringtie directly output goes to a pbs file')
 
+parser.add_option('', '--pbs',  action="store", dest='pbsFile',default="",
+                      help='PBS output file name.')
+
 parser.add_option('-d', '', action="store", dest='delim', default="_L",
                       help='sampleName delimiter to parse sampleNames to match across folders for merging.')
 
@@ -86,14 +89,14 @@ for inPath in inPathList:
   search=inPath+"/*.bam"
   if(opts.inputSampleDir):
     search=inPath+"/*/aligned.bam"
-  print(search)
+  print("search:"+search)
   fileList=glob.glob(search)
   for f in fileList:
     start=f.rfind("/")+1
     end=-4 #remove .bam
     if(opts.inputSampleDir):
       start=f.rfind("/",0,f.rfind("/")-2)+1
-      end=f.rfind("/",start)
+      end=f.rfind("/",start)+1
     if end==-1:
       sampleName=f[start:]
     else:
@@ -102,8 +105,8 @@ for inPath in inPathList:
       sampleName=sampleName[0:sampleName.find(opts.delim)]
     if(not sampleName in sampleList):
       sampleList[sampleName]=[]
-      sampleList[sampleName].push(saampleName)
-    sampleList[sampleName].push(f)
+      sampleList[sampleName].append(sampleName)
+    sampleList[sampleName].append(f)
 
 
 for sampleFileList in sampleList:
@@ -111,7 +114,8 @@ for sampleFileList in sampleList:
   toMerge=""
   inputFile=""
   sampleName=""
-  for sampleFile in sampleFileList:
+  sOptions=options
+  for sampleFile in sampleList[sampleFileList]:
     if(sampleName==""):
       sampleName=sampleFile
     else:
@@ -119,7 +123,7 @@ for sampleFileList in sampleList:
       if(opts.sort):
         sopt=""
         if(opts.sortProc>1):
-          sopt="-@ "+opts.sortProc+" "
+          sopt="-@ "+str(opts.sortProc)+" "
         if(opts.sortMem):
           sopt+="-m "+opts.sortMem+" "
         sortbam=sampleFile.replace(".bam",".sorted.bam")
@@ -158,26 +162,26 @@ for sampleFileList in sampleList:
 
   #stringtie
   fileList=inputFile.split(",")
-  for file in fileList:
+  for f in fileList:
     name=sampleName
     if(len(fileList)>1):
       if(opts.inputSampleDir):
-        start=file.rfind("/",0,file.rfind("/"))+1
-        end=file.rfind("/")
-        name=file[start:end]
+        start=f.rfind("/",0,f.rfind("/"))+1
+        end=f.rfind("/")
+        name=f[start:end]
       else:
-        start=file.rfind("/")+1
-        end=file.rfind(".bam")
-        end2=file.rfind(".sorted.bam")
+        start=f.rfind("/")+1
+        end=f.rfind(".bam")
+        end2=f.rfind(".sorted.bam")
         low=end
         if(end2>-1):
           low=end2
-        name=file[start:low]
+        name=f[start:low]
     if(opts.output):
-      options+= "-o "+opts.output+"/"+opts.output+"/"+name+".gtf "
+      sOptions+= "-o "+opts.output+"/"+name+".gtf "
     if(opts.label):
-      options+="-l "+name+opts.label+" "
-    arg="stringtie "+options+" "+bam+" > "+opts.output+"/"+name+".out 2>&1"
+      sOptions+="-l "+name+opts.label+" "
+    arg="stringtie "+sOptions+" "+f+" > "+opts.output+"/"+name+".out 2>&1"
 
     if(opts.pbs):
       PBS.write("echo 'running: "+sampleName+"'\n")
