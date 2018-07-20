@@ -6,6 +6,7 @@
 # Generic script to run bowtie2 alignment to rRNA on a batch of samples.
 #
 # 1.0 - 4/3/18 - Initial version
+# 1.0.1 - 7/20/18 - Fixed Sytax error, add to help
 ##############################################################################################
 
 import sys,subprocess,glob,os
@@ -38,19 +39,19 @@ parser.add_option('-x', '--index',  action="store",type="string", dest='index',h
 parser.add_option('-F', '--unmapped-fastq',  action="store_false", dest='toFastQ', default=False,
                       help='convert unmapped.bam to fastq files')
 parser.add_option('', '--bt2-input',  action="store", dest='bt2Input', default="q",
-                      help='')
+                      help='Bowtie2 Input file format (default -q)')
 parser.add_option('', '--bt2-k',  action="store", dest='bt2K', default=2,
-                      help='')
+                      help='Bowtie2 option -k ## (default 2)')
 parser.add_option('', '--bt2-sensitivity',  action="store", dest='bt2Sensitivity', default="very-sensitive",
-                      help='')
+                      help='Bowtie2 option (default --very-sensitive)')
 parser.add_option('', '--bt2-gbar',  action="store", dest='bt2Gbar', default=4,
-                      help='')
+                      help='Bowtie2 option --gbar(#) default(4)')
 parser.add_option('', '--bt2-mp',  action="store", dest='bt2Mp', default="10,4",
-                      help='')
+                      help='Bowtie2 --mp #,# default(10,4)')
 parser.add_option('', '--bt2-np',  action="store", dest='bt2Np', default=1,
-                      help='')
+                      help='Bowtie2 --np # default(1)')
 parser.add_option('', '--bt2-stranded',  action="store", dest='bt2Stranded', default="fr",
-                      help='')
+                      help='Bowtie2 stranded option default(--fr)')
 
 
 (opts, args) = parser.parse_args()
@@ -105,7 +106,7 @@ for f in fileList:
         arg=str("bowtie2 "+options+"-x "+opts.index+" -1 "+f)
         if(opts.paired):
             arg+=" -2 "+f2
-        arg+=" 2> "opts.output+"/"+sampleName+"/alignSummary.txt | tee >(samtools view -f 0x4 -bS1 - > "+unmappedBAM+" 2> /dev/null) >(samtools view -F 0x4 -bS1 - > "+alignedBAM+" 2> /dev/null) | grep errors ")
+        arg+=" 2> "+opts.output+"/"+sampleName+"/alignSummary.txt | tee >(samtools view -f 0x4 -bS1 - > "+unmappedBAM+" 2> /dev/null) >(samtools view -F 0x4 -bS1 - > "+alignedBAM+" 2> /dev/null) | grep errors "
         print("running: "+sampleName)
         print("w command: "+arg)
         completed=subprocess.run(arg,shell=True, executable='/bin/bash')
