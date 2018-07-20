@@ -14,7 +14,7 @@ import sys,subprocess,glob,os
 from optparse import OptionParser
 
 usage = 'USAGE: %prog inputPath indexPrefix procNum\n'
-parser = OptionParser(usage=usage, version="1.0")
+parser = OptionParser(usage=usage, version="1.0.1")
 parser.add_option('-p', '',  action="store", dest='maxProc',type='int',default=1,
                       help='set the number of processors to run aligner with')
 
@@ -67,19 +67,19 @@ options=""
 if(opts.bt2Input):
     options+="-"+opts.bt2Input+" "
 if(opts.bt2K):
-    options+="-k "+opts.bt2K+" "
+    options+="-k "+str(opts.bt2K)+" "
 if(opts.bt2Sensitivity):
     options+="--"+opts.bt2Sensitivity+" "
 if(opts.bt2Gbar):
-    options+="--gbar "+opts.bt2Gbar+" "
+    options+="--gbar "+str(opts.bt2Gbar)+" "
 if(opts.bt2Mp):
     options+="--mp "+opts.bt2Mp+" "
 if(opts.bt2Np):
-    options+="--np "+opts.bt2Np+" "
+    options+="--np "+str(opts.bt2Np)+" "
 if(opts.bt2Stranded):
     options+="--"+opts.bt2Stranded+" "
 if(opts.maxProc>1):
-    options+="-p "+opts.maxProc+" "
+    options+="-p "+str(opts.maxProc)+" "
 
 search="*"
 if(opts.paired):
