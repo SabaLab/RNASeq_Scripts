@@ -13,8 +13,8 @@ import sys,subprocess,glob,os
 
 from optparse import OptionParser
 
-usage = 'USAGE: %prog inputPath indexPrefix procNum\n'
-parser = OptionParser(usage=usage, version="1.0.1")
+usage = 'USAGE: %prog inputPath\n'
+parser = OptionParser(usage=usage, version="1.0.1q")
 parser.add_option('-p', '',  action="store", dest='maxProc',type='int',default=1,
                       help='set the number of processors to run aligner with')
 
@@ -30,7 +30,7 @@ parser.add_option('', '--pair-prefix',  action="store", dest='pairPrefix', defau
                       help='A prefix before the paired label part of the file name for paired reads, defaults to _R and assumes _R1 - first read and _R2 is second read')
 
 parser.add_option('-i', '--input-suffix',  action="store", dest='inSuffix', default=".fq.gz",
-                      help='The suffix to look for in the inpute files.  ex .fq.gz or .fastq')
+                      help='The suffix to look for in the input files.  ex .fq.gz or .fastq')
 
 parser.add_option('-o', '--output',  action="store", dest='output', 
                       help='The output folder.  Output will go to a folder with the extracted Sample Name in this location.')
@@ -53,6 +53,24 @@ parser.add_option('', '--bt2-np',  action="store", dest='bt2Np', default=1,
 parser.add_option('', '--bt2-stranded',  action="store", dest='bt2Stranded', default="fr",
                       help='Bowtie2 stranded option default(--fr)')
 
+
+def run(*popenargs, input=None, check=False, **kwargs):
+    if input is not None:
+        if 'stdin' in kwargs:
+            raise ValueError('stdin and input arguments may not both be used.')
+        kwargs['stdin'] = subprocess.PIPE
+    process = subprocess.Popen(*popenargs, **kwargs)
+    try:
+        stdout, stderr = process.communicate(input)
+    except:
+        process.kill()
+        process.wait()
+        raise
+    retcode = process.poll()
+    if check and retcode:
+        raise subprocess.CalledProcessError(
+            retcode, process.args, output=stdout, stderr=stderr)
+    return retcode, stdout, stderr
 
 (opts, args) = parser.parse_args()
 errors = ''
@@ -90,9 +108,9 @@ fileList=glob.glob(inPath+"/"+search+opts.inSuffix)
 for f in fileList:
     sampleName=""
     start=f.rfind("/")+1
-    end=f.rfind(opts.sampleDelim)-1
-    if(inPath):
-        start=f.rfind("/",0,f.rfind("/")-1)  
+    end=f.rfind(opts.sampleDelim)
+    #if(inPath[-1:]=="/"):
+    #    start=f.rfind("/",0,f.rfind("/")-1)
     if end==-1:
         sampleName=f[start:]
     else:
@@ -103,9 +121,11 @@ for f in fileList:
         if(not os.path.exists(opts.output+"/"+sampleName)):
             os.makedirs(opts.output+"/"+sampleName)
         f2=f.replace(opts.pairPrefix+"1",opts.pairPrefix+"2")
-        arg=str("bowtie2 "+options+"-x "+opts.index+" -1 "+f)
+        arg=str("bowtie2 "+options+"-x "+opts.index)
         if(opts.paired):
-            arg+=" -2 "+f2
+            arg+=" -1 "+f+" -2 "+f2
+        else:
+          arg += " -U " + f
         arg+=" 2> "+opts.output+"/"+sampleName+"/alignSummary.txt | tee >(samtools view -f 0x4 -bS1 - > "+unmappedBAM+" 2> /dev/null) >(samtools view -F 0x4 -bS1 - > "+alignedBAM+" 2> /dev/null) | grep errors "
         print("running: "+sampleName)
         print("w command: "+arg)
